@@ -1,0 +1,39 @@
+{{ range . }} 	
+	<div class="block2">
+        <div class="photoInfoTable">
+          <div class="headerFilm">
+				  <h1 class="moviename" itemprop="name">{{ .NameRu }}</h1>
+				  <span itemprop="alternativeHeadline" style="{{ if not .IsDisplayOrigin }}display:none{{ end }}">{{ .OriginalName }}</span>
+          </div>
+          <div class="photoBlock">
+            <div class="film-img-box">
+					<div class="film-rating" style="background-color: {{ .RaitingCollor }};">{{.Raiting}}</div> <!-- #3bb33b > 7 #aaa; -->
+					<img src="{{ .PosterUrl }}" alt="{{ .NameRu  }}" itemprop="image" width="205"></img>
+            </div>
+          </div>
+          <div class="infoTable">
+            <table class="info">
+              <tbody>
+			  {{range .InfoTable}}
+                <tr>
+						<td class="type">{{.Key}}</td>
+                  <td>
+						  <div style="position: relative">{{.Val}}</div>
+                  </td>
+                </tr>
+				{{end}}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="movie-buttons-container">
+				{{ range .Torrents }}
+				<button class="torrentbutton" style="" onclick="location.href='{{ .Link }}'">{{ .Type }}</button> 
+				{{ end }}
+        </div>
+      </div>
+	  {{ else }}
+	  <div class="block2">
+			  <p>No torrents found</p>
+	  </div>
+{{end}}
