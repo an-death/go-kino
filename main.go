@@ -3,18 +3,16 @@ package main
 import (
 	"net/http"
 	"os"
-	"strconv"
 	"text/template"
 )
 
-var PORT int
+var PORT string
 
 func init() {
-	if port, ok := os.LookupEnv("PORT"); ok {
-		PORT, _ = strconv.Atoi(port)
-	}
-	if PORT == 0 {
-		PORT = 8000
+	PORT = os.Getenv("PORT")
+
+	if PORT == "" {
+		PORT = "8000"
 	}
 }
 
@@ -82,5 +80,5 @@ func handler1(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handler1)
-	http.ListenAndServe(":8000", nil)
+	http.ListenAndServe(":", nil)
 }
