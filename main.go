@@ -80,5 +80,5 @@ func handler1(w http.ResponseWriter, r *http.Request) {
 func main() {
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handler1)
-	http.ListenAndServe(":", nil)
+	http.ListenAndServe(":"+PORT, nil)
 }
