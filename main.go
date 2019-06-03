@@ -3,20 +3,6 @@ package main
 import (
 	"net/http"
 	"os"
-<<<<<<< HEAD
-	"strconv"
-	"text/template"
-)
-
-var PORT int
-
-func init() {
-	if port, ok := os.LookupEnv("PORT"); ok {
-		PORT, _ = strconv.Atoi(port)
-	}
-	if PORT == 0 {
-		PORT = 8000
-=======
 	"text/template"
 )
 
@@ -27,7 +13,6 @@ func init() {
 
 	if PORT == "" {
 		PORT = "8000"
->>>>>>> 75059243e47b74d66502d467eb9a9a89cdcc3af1
 	}
 }
 
