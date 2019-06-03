@@ -2,8 +2,21 @@ package main
 
 import (
 	"net/http"
+	"os"
+	"strconv"
 	"text/template"
 )
+
+var PORT int
+
+func init() {
+	if port, ok := os.LookupEnv("PORT"); ok {
+		PORT, _ = strconv.Atoi(port)
+	}
+	if PORT == 0 {
+		PORT = 8000
+	}
+}
 
 type Movie struct {
 	OriginalName string
@@ -59,7 +72,7 @@ var todo = Movie{
 }
 
 func handler1(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("index.html").ParseFiles("index.html", "movie.html")
+	t, err := template.New("index.html").ParseFiles("html/index.html", "html/movie.html")
 	if err != nil {
 		panic(err)
 	}
@@ -67,7 +80,7 @@ func handler1(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("."))))
+	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", handler1)
 	http.ListenAndServe(":8000", nil)
 }
