@@ -18,7 +18,7 @@ func init() {
 	if PORT == "" {
 		PORT = "8000"
 	}
-	releaseProvider = releases.NewReleaseProvider()
+	releaseProvider = releases.NewKinopoiskProvider()
 }
 
 func handler1(w http.ResponseWriter, r *http.Request) {
@@ -26,7 +26,9 @@ func handler1(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		panic(err)
 	}
-	newReleases := releaseProvider.GetReleases(time.Now(), time.Now())
+	now := time.Now()
+
+	newReleases := releaseProvider.GetReleases(now.AddDate(0, -1, 0), now)
 	t.Execute(w, newReleases)
 }
 
