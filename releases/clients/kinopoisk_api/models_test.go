@@ -13,47 +13,8 @@ const apiResponse string = `{
    "data":{
       "items":[
          {
-            "id":1108494,
-            "slug":"semya-po-bystromu-2018",
-            "title":"Семья по-быстрому",
-            "originalTitle":"Instant Family",
-            "year":2018,
-            "poster":{
-               "baseUrl":"//st.kp.yandex.net/images/film_iphone/iphone360_1108494.jpg",
-               "url":"//st.kp.yandex.net/images/film_iphone/iphone360_1108494.jpg?width=360"
-            },
-            "genres":[
-               {
-                  "id":8,
-                  "name":"драма"
-               },
-               {
-                  "id":6,
-                  "name":"комедия"
-               }
-            ],
-            "countries":[
-               {
-                  "id":1,
-                  "name":"США"
-               }
-            ],
-            "rating":{
-               "value":7.303,
-               "count":16387,
-               "ready":true
-            },
-            "expectations":{
-               "value":99.01,
-               "count":1428,
-               "ready":true
-            },
-            "currentRating":"RATING",
-            "serial":false,
-            "duration":118,
-            "trailerId":153687,
+            "id":1,
             "contextData":{
-               "isDigital":true,
                "releaseDate":"2019-06-01"
             }
          }

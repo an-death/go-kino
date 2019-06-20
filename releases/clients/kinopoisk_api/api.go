@@ -17,31 +17,73 @@ const (
 	KINOPOISK_BASE_URL          = "https://ma.kinopoisk.ru"
 )
 
+type apiError string
+
+func (e apiError) Error() string {
+	return string(e)
+}
+
+const (
+	NoReleasesFound apiError = "No releases found"
+)
+
+type KinopoiskReleaser interface {
+	GetReleases(from, to time.Time) ([]ReleaseItem, error)
+}
+
+type KinopoiskFilmDetail interface {
+	FilmDetail(filmID int) (MovieItem, error)
+}
+
 type KinopoiskAPI interface {
-	GetReleases(date time.Time) ([]MovieItem, error)
-	//	FilmDetail(filmID int) (MovieItem, error)
+	KinopoiskReleaser
+	KinopoiskFilmDetail
 }
 
 func NewKinopoiskAPI(client clients.APIClient) KinopoiskAPI {
-	return &kinopoiskAPI{client}
+	return &kinopoiskAPI{
+		KinopoiskReleaser:   &kinopoiskReleaser{client},
+		KinopoiskFilmDetail: &kinopoiskFilmDetail{client},
+	}
 }
 
 type kinopoiskAPI struct {
+	KinopoiskReleaser
+	KinopoiskFilmDetail
+}
+
+type kinopoiskReleaser struct {
 	clients.APIClient
 }
 
-func (api *kinopoiskAPI) GetReleases(date time.Time) ([]MovieItem, error) {
-	return api.getReleases(date, 0)
+func (api *kinopoiskReleaser) GetReleases(from, to time.Time) ([]ReleaseItem, error) {
+	var releases = make([]ReleaseItem, 0, 150)
+	log.Printf("Kinopoisk get releases from %s to %s /n", from, to)
+	for date := from; date.Before(to) || date.Month() == to.Month(); date = date.AddDate(0, 1, 0) {
+		newR, err := api.getReleases(date, 0)
+		log.Printf("Movies recived %v", len(newR))
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+		releases = append(releases, newR...)
+		log.Printf("Movies collected %v", len(releases))
+	}
+	if releases == nil {
+		return nil, NoReleasesFound
+	}
+
+	return releases, nil
 }
 
-func (api *kinopoiskAPI) getReleases(date time.Time, offset int) ([]MovieItem, error) {
+func (api *kinopoiskReleaser) getReleases(date time.Time, offset int) ([]ReleaseItem, error) {
 	log.Printf("Kinopoisk Request for date %s  with offset %v", date, offset)
 	uri, err := api.prepareRealeasesUri(date, offset)
 	if err != nil {
 		return nil, err
 	}
 	var innerF func(url.URL) error
-	var movies []MovieItem
+	var movies []ReleaseItem
 
 	innerF = func(uri url.URL) error {
 		resp, err := api.APIClient.Request("GET", KINOPOISK_BASE_URL, uri.String())
@@ -55,6 +97,7 @@ func (api *kinopoiskAPI) getReleases(date time.Time, offset int) ([]MovieItem, e
 		if err != nil {
 			return err
 		}
+		//log.Printf("%s\n\n", buf)
 		err = json.Unmarshal(buf, &rc)
 		if err != nil || !rc.IsSuccess {
 			return err
@@ -79,7 +122,7 @@ func (api *kinopoiskAPI) getReleases(date time.Time, offset int) ([]MovieItem, e
 	return movies, innerF(*uri)
 }
 
-func (api *kinopoiskAPI) prepareRealeasesUri(date time.Time, offset int) (*url.URL, error) {
+func (api *kinopoiskReleaser) prepareRealeasesUri(date time.Time, offset int) (*url.URL, error) {
 	uri, err := url.Parse(KINOPOISK_API_RELEASES_PATH)
 	if err != nil {
 		return uri, err
@@ -91,4 +134,12 @@ func (api *kinopoiskAPI) prepareRealeasesUri(date time.Time, offset int) (*url.U
 	uri.RawQuery = q.Encode()
 	return uri, nil
 
+}
+
+type kinopoiskFilmDetail struct {
+	clients.APIClient
+}
+
+func (k *kinopoiskFilmDetail) FilmDetail(filmID int) (MovieItem, error) {
+	return MovieItem{}, nil
 }

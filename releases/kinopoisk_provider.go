@@ -1,10 +1,9 @@
 package releases
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"strconv"
+	"sync"
 	"time"
 
 	kinopoisk "github.com/an-death/go-kino/releases/clients/kinopoisk_api"
@@ -17,55 +16,49 @@ func NewKinopoiskProvider() ReleaseProvider {
 }
 
 type kinopoiskProvider struct {
-	client kinopoisk.KinopoiskAPI
+	kinopoisk kinopoisk.KinopoiskAPI
 }
 
 func (p *kinopoiskProvider) GetReleases(from, to time.Time) []Release {
-	var movies []kinopoisk.MovieItem
-	log.Printf("Kinopoisk Start from %s to %s /n", from, to)
-	for date := from; date.Before(to) || date.Month() == to.Month(); date = date.AddDate(0, 1, 0) {
-		newM, err := p.client.GetReleases(date)
-		log.Printf("Movies recived %v", len(newM))
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-		movies = append(movies, newM...)
-		log.Printf("Movies collected %v", len(movies))
-	}
-	if movies == nil {
+	var releases []kinopoisk.ReleaseItem
+	releases, err := p.kinopoisk.GetReleases(from, to)
+	if err != nil {
+		log.Printf("%s\n", err)
 		return nil
 	}
-
-	return p.fromMoviesToReleases(movies)
+	return p.fillReleases(releases)
 }
 
-func (p kinopoiskProvider) fromMoviesToReleases(movies []kinopoisk.MovieItem) []Release {
-	var releases = make([]Release, len(movies), len(movies))
-	for i, movie := range movies {
-		release := releases[i]
-		release.OriginName = movie.OriginTitle
-		release.Raiting = movie.Rating.Value
-		release.NameRu = movie.Title
-		release.PosterUrl = movie.Poster.Url
-		release.InfoTable = []Info{
-			{Key: "Описание", Val: "NotImplemented"},
-			{Key: "Год", Val: strconv.Itoa(movie.Year)},
-			{Key: "Страна", Val: fmt.Sprintf("%v", movie.Countries)},
-			{Key: "Жанр", Val: fmt.Sprintf("%v", movie.Countries)},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-			{Key: "Описание", Val: ""},
-		}
-		releases[i] = release
+func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Release {
+	var stack = newReleasesStack(len(movies))
+	for i, releaseItem := range movies {
+		go func(id int, r kinopoisk.ReleaseItem) {
+			result, err := p.getReleaseInfo(releaseItem)
+			if err != nil {
+				log.Printf("release item %v detail request failed with %s\n", releaseItem, err)
+				return
+			}
+			stack.Add(result)
+		}(i, releaseItem)
 	}
-	log.Printf("%v", releases)
-	return releases
+	return stack.releases
+}
+
+func (p *kinopoiskProvider) getReleaseInfo(item kinopoisk.ReleaseItem) (Release, error) {
+	return Release{}, nil
+}
+
+type releasesStack struct {
+	releases []Release
+	sync.Mutex
+}
+
+func newReleasesStack(size int) *releasesStack {
+	return &releasesStack{releases: make([]Release, 0, size)}
+}
+
+func (s *releasesStack) Add(release Release) {
+	s.Lock()
+	s.releases = append(s.releases, release)
+	s.Unlock()
 }

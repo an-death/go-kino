@@ -10,13 +10,20 @@ type responseContainer struct {
 	Data      responseData `json:"data"`
 }
 type responseData struct {
-	Items []MovieItem      `json:"items"`
+	Items []ReleaseItem    `json:"items"`
 	Stats responseDataStat `json:"stats"`
 }
 type responseDataStat struct {
 	Total  int `json:"total"`
 	Limit  int `json:"limit"`
 	Offset int `json:"offset"`
+}
+
+type ReleaseItem struct {
+	Id          int `json:"id"`
+	ContextData struct {
+		ReleaseDate releaseDate `json:"releaseDate"`
+	} `json:"contextData"`
 }
 
 type MovieItem struct {
@@ -49,7 +56,6 @@ type raiting struct {
 	Ready bool    `json:"ready"`
 }
 type named struct {
-	Id   int    `json:"id"`
 	Name string `json:"name"`
 }
 

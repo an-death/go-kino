@@ -6,7 +6,7 @@ type Release struct {
 	OriginName string
 	Raiting    float64
 	NameRu     string
-	InfoTable  []Info
+	InfoTable  map[string]string
 
 	PosterUrl string
 	Torrents  []Torrent
@@ -21,11 +21,6 @@ func (m *Release) RaitingCollor() string {
 
 func (m *Release) IsDisplayOrigin() bool {
 	return len(m.OriginName) > 0
-}
-
-type Info struct {
-	Key string
-	Val string
 }
 
 type Torrent struct {
