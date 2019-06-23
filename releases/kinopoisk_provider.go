@@ -31,21 +31,52 @@ func (p *kinopoiskProvider) GetReleases(from, to time.Time) []Release {
 
 func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Release {
 	var stack = newReleasesStack(len(movies))
+	var group sync.WaitGroup
+
+	defer func(now time.Time) {
+		log.Printf("FilmDetail done %s", time.Now().Sub(now))
+	}(time.Now())
+
 	for i, releaseItem := range movies {
+		group.Add(1)
 		go func(id int, r kinopoisk.ReleaseItem) {
-			result, err := p.getReleaseInfo(releaseItem)
+			defer group.Done()
+			result, err := p.getReleaseInfo(r)
 			if err != nil {
-				log.Printf("release item %v detail request failed with %s\n", releaseItem, err)
+				log.Printf("release item Id:%v, %v detail request failed with %s\n", id, r, err)
 				return
 			}
 			stack.Add(result)
 		}(i, releaseItem)
 	}
+	group.Wait()
 	return stack.releases
 }
 
 func (p *kinopoiskProvider) getReleaseInfo(item kinopoisk.ReleaseItem) (Release, error) {
-	return Release{}, nil
+	info, err := p.kinopoisk.FilmDetail(item.Id)
+	if err != nil {
+		return Release{}, err
+	}
+	release := Release{
+		OriginName: info.NameEn,
+		NameRu:     info.NameRu,
+		InfoTable: map[string]string{
+			"Год":               info.Year,
+			"Страна":            info.Country,
+			"Режисёр":           info.Creators.Directors.String(),
+			"Актёры":            info.Creators.Actors.String(),
+			"Жанр":              info.Genre,
+			"Возраст":           info.RaitingMPAA + " " + info.RaitingAgeLimit,
+			"Продолжительность": info.FilmLength,
+			"Рeйтинг КиноПоиск": info.RatingData.Rating,
+			"Рейтинг IMDb":      info.RatingData.RatingIMDb,
+			"Описание":          info.Description,
+		},
+		PosterUrl: item.Poster.Url,
+		Rating:    info.Rating(),
+	}
+	return release, nil
 }
 
 type releasesStack struct {

@@ -14,6 +14,10 @@ const apiResponse string = `{
       "items":[
          {
             "id":1,
+			"title": "testTitle",
+			"poster": {
+				"url": "test_poster_url"
+			},
             "contextData":{
                "releaseDate":"2019-06-01"
             }
@@ -85,4 +89,102 @@ func TestJSONParseModel(t *testing.T) {
 			assert.JSONEq(t, tc.apiResponse, string(data))
 		})
 	}
+}
+
+func TestJSONParse_json_prof(t *testing.T) {
+	var testCases = []struct {
+		name     string
+		data     []byte
+		expected json_prof
+	}{
+		{name: "director", data: []byte(`"director"`), expected: director},
+		{name: "actor", data: []byte(`"actor"`), expected: actor},
+		{name: "producer", data: []byte(`"producer"`), expected: producer},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			var prof json_prof
+			assert.NoError(t, json.Unmarshal(tc.data, &prof))
+			assert.Equal(t, tc.expected, prof)
+		})
+	}
+}
+
+func TestJSONParse_json_people(t *testing.T) {
+	var expected = json_people{
+		NameRu:         "Имя",
+		NameEn:         "NameEn",
+		ProfessionText: "Режисёр",
+		ProfessionKey:  director,
+	}
+	var testData = []byte(`{
+	"nameRu": "Имя",
+	"nameEn": "NameEn",
+	"professionText": "Режисёр",
+	"professionKey": "director"
+	}`)
+	var testPeople json_people
+
+	assert.NoError(t, json.Unmarshal(testData, &testPeople))
+	assert.Equal(t, expected, testPeople)
+}
+
+func TestJSONParse_json_creators(t *testing.T) {
+	var expected = json_creators{
+		Directors: []json_people{
+			json_people{ProfessionKey: director},
+		},
+		Actors: []json_people{
+			json_people{ProfessionKey: actor},
+		},
+		Producers: []json_people{
+			json_people{ProfessionKey: producer},
+			json_people{ProfessionKey: producer},
+		},
+	}
+	var testData = []byte(`
+		[
+			[{"professionKey": "director"}],
+			[{"professionKey":"actor"}],
+			[{"id":1, "professionKey":"producer"}, {"id":2, "professionKey":"producer"}]
+		]
+	`)
+	var testCreators json_creators
+
+	assert.NoError(t, json.Unmarshal(testData, &testCreators))
+	assert.Equal(t, expected, testCreators)
+}
+
+func TestStringer_peoples(t *testing.T) {
+	var testCases = []struct {
+		name     string
+		expected string
+		actual   peoples
+	}{
+		{name: "one", expected: "People1", actual: peoples{json_people{NameRu: "People1"}}},
+		{name: "three", expected: "People1, People2, People3",
+			actual: peoples{
+				json_people{NameRu: "People1"},
+				json_people{NameRu: "People2"},
+				json_people{NameRu: "People3"},
+			}},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			assert.Equal(t, tc.expected, tc.actual.String())
+		})
+	}
+}
+
+func TestFilmDetail_Rating(t *testing.T) {
+	var expected = 10.0
+	var testData = []byte(`{
+"ratingData": {
+	"rating": "10",
+	"ratingIMDb": "10.0"
+}}`)
+	var actual FilmDetail
+
+	assert.NoError(t, json.Unmarshal(testData, &actual))
+	assert.Equal(t, expected, actual.Rating())
 }

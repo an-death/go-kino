@@ -18,10 +18,9 @@ var todo = Release{
 		"Актеры":            "Марк Оулберг, Шон Андерс",
 		"Дата выхода":       "2019-06-01",
 	},
+	Rating:    10,
 	PosterUrl: "https://st.kp.yandex.net/images/film_iphone/iphone_1108494.jpg?d=20190523114230&width=360",
 	Torrents:  []Torrent{{"http://top-tor.org/download/696534", "BDRip 1080p"}},
-
-	Raiting: 10,
 }
 
 type mockReleaseProvider struct{}

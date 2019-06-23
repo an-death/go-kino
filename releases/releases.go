@@ -4,16 +4,15 @@ import "time"
 
 type Release struct {
 	OriginName string
-	Raiting    float64
 	NameRu     string
 	InfoTable  map[string]string
-
-	PosterUrl string
-	Torrents  []Torrent
+	Rating     float64
+	PosterUrl  string
+	Torrents   []Torrent
 }
 
 func (m *Release) RaitingCollor() string {
-	if m.Raiting > 7 {
+	if m.Rating > float64(7) {
 		return "#3bb33b"
 	}
 	return "#aaa"

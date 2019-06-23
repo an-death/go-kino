@@ -7,7 +7,7 @@
 				  </div>
 				  <div class="photoBlock">
 					<div class="film-img-box">
-							<div class="film-rating" style="background-color: {{ .RaitingCollor }};">{{.Raiting}}</div> <!-- #3bb33b > 7 #aaa; -->
+							<div class="film-rating" style="background-color: {{ .RaitingCollor }};">{{printf "%.2f" .Rating}}</div> <!-- #3bb33b > 7 #aaa; -->
 							<img src="{{ .PosterUrl }}" alt="{{ .NameRu  }}" itemprop="image" width="205"></img>
 					</div>
 				  </div>
