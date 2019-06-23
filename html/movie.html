@@ -2,7 +2,8 @@
 			<div class="block2">
 				<div class="photoInfoTable">
 				  <div class="headerFilm">
-						  <h1 class="moviename" itemprop="name">{{ .NameRu }}</h1>
+					  <a href="{{ .WebURL }}" style="text-decoration: none"  >
+							  <h1 class="moviename" itemprop="name">{{ .NameRu }}</h1></a>
 						  <span itemprop="alternativeHeadline" style="{{ if not .IsDisplayOrigin }}display:none{{ end }}">{{ .OriginName }}</span>
 				  </div>
 				  <div class="photoBlock">
@@ -15,12 +16,15 @@
 					<table class="info">
 					  <tbody>
 					  {{range $key, $val := .InfoTable}}
+					  {{ if not $val }}
+					  {{else}}
 						<tr>
 								<td class="type">{{$key}}</td>
 						  <td>
 								  <div style="position: relative">{{$val}}</div>
 						  </td>
 						</tr>
+						{{end}}
 						{{end}}
               </tbody>
             </table>

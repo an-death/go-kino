@@ -75,6 +75,7 @@ func (p *kinopoiskProvider) getReleaseInfo(item kinopoisk.ReleaseItem) (Release,
 		},
 		PosterUrl: item.Poster.Url,
 		Rating:    info.Rating(),
+		WebURL:    info.WebURL,
 	}
 	return release, nil
 }

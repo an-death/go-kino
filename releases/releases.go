@@ -8,6 +8,7 @@ type Release struct {
 	InfoTable  map[string]string
 	Rating     float64
 	PosterUrl  string
+	WebURL     string
 	Torrents   []Torrent
 }
 
