@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"net/http"
 	"os"
 	"text/template"
@@ -11,6 +12,7 @@ import (
 
 var PORT string
 var releaseProvider releases.ReleaseProvider
+var infoTpl *template.Template
 
 func init() {
 	PORT = os.Getenv("PORT")
@@ -19,17 +21,15 @@ func init() {
 		PORT = "8000"
 	}
 	releaseProvider = releases.NewKinopoiskProvider()
+	infoTpl = template.Must(template.ParseFiles("html/index.html", "html/movie.html"))
 }
 
 func handler1(w http.ResponseWriter, r *http.Request) {
-	t, err := template.New("index.html").ParseFiles("html/index.html", "html/movie.html")
-	if err != nil {
-		panic(err)
-	}
 	now := time.Now()
 
 	newReleases := releaseProvider.GetReleases(now.AddDate(0, -1, 0), now)
-	t.Execute(w, newReleases)
+	infoTpl.Execute(w, newReleases)
+	log.Printf("Request done %s", time.Now().Sub(now))
 }
 
 func main() {

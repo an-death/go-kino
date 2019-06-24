@@ -4,16 +4,17 @@ import "time"
 
 type Release struct {
 	OriginName string
-	Raiting    float64
 	NameRu     string
-	InfoTable  []Info
-
-	PosterUrl string
-	Torrents  []Torrent
+	InfoTable  map[string]string
+	Rating     float64
+	PosterUrl  string
+	WebURL     string
+	Date       time.Time
+	Torrents   []Torrent
 }
 
-func (m *Release) RaitingCollor() string {
-	if m.Raiting > 7 {
+func (m *Release) RatingColor() string {
+	if m.Rating > float64(7) {
 		return "#3bb33b"
 	}
 	return "#aaa"
@@ -21,11 +22,6 @@ func (m *Release) RaitingCollor() string {
 
 func (m *Release) IsDisplayOrigin() bool {
 	return len(m.OriginName) > 0
-}
-
-type Info struct {
-	Key string
-	Val string
 }
 
 type Torrent struct {
@@ -37,6 +33,16 @@ type ReleaseProvider interface {
 	GetReleases(from, to time.Time) []Release
 }
 
-func NewReleaseProvider() ReleaseProvider {
-	return &mockReleaseProvider{}
+type Releases []Release
+
+func (r Releases) Len() int {
+	return len(r)
+}
+
+func (r Releases) Less(i int, j int) bool {
+	return r[i].Date.Before(r[j].Date)
+}
+
+func (r Releases) Swap(i int, j int) {
+	r[i], r[j] = r[j], r[i]
 }

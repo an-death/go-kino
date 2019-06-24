@@ -1,27 +1,31 @@
-{{ range . }} 	
-	<div class="block2">
-        <div class="photoInfoTable">
-          <div class="headerFilm">
-				  <h1 class="moviename" itemprop="name">{{ .NameRu }}</h1>
-				  <span itemprop="alternativeHeadline" style="{{ if not .IsDisplayOrigin }}display:none{{ end }}">{{ .OriginName }}</span>
-          </div>
-          <div class="photoBlock">
-            <div class="film-img-box">
-					<div class="film-rating" style="background-color: {{ .RaitingCollor }};">{{.Raiting}}</div> <!-- #3bb33b > 7 #aaa; -->
-					<img src="{{ .PosterUrl }}" alt="{{ .NameRu  }}" itemprop="image" width="205"></img>
-            </div>
-          </div>
-          <div class="infoTable">
-            <table class="info">
-              <tbody>
-			  {{range .InfoTable}}
-                <tr>
-						<td class="type">{{.Key}}</td>
-                  <td>
-						  <div style="position: relative">{{.Val}}</div>
-                  </td>
-                </tr>
-				{{end}}
+		{{ range . }} 	
+			<div class="block2">
+				<div class="photoInfoTable">
+				  <div class="headerFilm">
+					  <a href="{{ .WebURL }}" style="text-decoration: none"  >
+							  <h1 class="moviename" itemprop="name">{{ .NameRu }}</h1></a>
+						  <span itemprop="alternativeHeadline" style="{{ if not .IsDisplayOrigin }}display:none{{ end }}">{{ .OriginName }}</span>
+				  </div>
+				  <div class="photoBlock">
+					<div class="film-img-box">
+							<div class="film-rating" style="background-color: {{ .RatingColor }};">{{printf "%.2f" .Rating}}</div> <!-- #3bb33b > 7 #aaa; -->
+							<img src="{{ .PosterUrl }}" alt="{{ .NameRu  }}" itemprop="image" width="205"></img>
+					</div>
+				  </div>
+				  <div class="infoTable">
+					<table class="info">
+					  <tbody>
+					  {{range $key, $val := .InfoTable}}
+					  {{ if not $val }}
+					  {{else}}
+						<tr>
+								<td class="type">{{$key}}</td>
+						  <td>
+								  <div style="position: relative">{{$val}}</div>
+						  </td>
+						</tr>
+						{{end}}
+						{{end}}
               </tbody>
             </table>
           </div>

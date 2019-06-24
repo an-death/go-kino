@@ -18,11 +18,11 @@ const (
 
 type client struct {
 	clients.Doer
-	baseUlr        string
+	baseUrl        string
 	clientId, uuid string
 }
 
-func NewAPIClient(do clients.Doer) clients.APIClient {
+func NewAPIClient(baseUrl string, do clients.Doer) clients.APIClient {
 	var clientId = make([]byte, 16, 16)
 	var uuid = make([]byte, 12, 12)
 	rand.Read(clientId)
@@ -31,10 +31,11 @@ func NewAPIClient(do clients.Doer) clients.APIClient {
 		Doer:     do,
 		clientId: fmt.Sprintf("%x", clientId),
 		uuid:     fmt.Sprintf("%x", uuid),
+		baseUrl:  baseUrl,
 	}
 }
 
-func (c *client) Request(method, baseUrl, uri string) (*http.Response, error) {
+func (c *client) Request(method, uri string) (*http.Response, error) {
 	var err error
 	uri, err = c.uriWithUUID(uri)
 	if err != nil {
@@ -44,7 +45,7 @@ func (c *client) Request(method, baseUrl, uri string) (*http.Response, error) {
 	timeNow := time.Now()
 	timestamp := strconv.FormatInt(timeNow.UnixNano(), 10)
 	signature := c.createSignature(uri + timestamp + KINOPOISK_API_SALT)
-	request, err := http.NewRequest(method, baseUrl+uri, nil)
+	request, err := http.NewRequest(method, c.baseUrl+uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +62,6 @@ func (c *client) Request(method, baseUrl, uri string) (*http.Response, error) {
 	request.Header.Add("X-SIGNATURE", signature)
 
 	return c.Doer.Do(request)
-
 }
 
 func (c *client) uriWithUUID(baseURI string) (string, error) {
