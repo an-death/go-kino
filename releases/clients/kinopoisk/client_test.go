@@ -57,11 +57,11 @@ func Test_client_Request(t *testing.T) {
 		Doer:     mock,
 		clientId: "testClient",
 		uuid:     "test",
+		baseUrl:  "http://some.url",
 	}
 
-	var baseUrl = "http://some.url"
 	var baseUri = "/uri"
-	testClient.Request("GET", baseUrl, baseUri)
+	testClient.Request("GET", baseUri)
 	wantR := mock.savedRequest
 
 	assert.Equal(t, "0", wantR.Header.Get("X-TIMESTAMP"))

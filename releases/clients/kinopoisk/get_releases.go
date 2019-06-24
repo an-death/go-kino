@@ -2,7 +2,7 @@ package kinopoisk
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -32,25 +32,9 @@ type KinopoiskReleaser interface {
 	GetReleases(from, to time.Time) ([]ReleaseItem, error)
 }
 
-type KinopoiskFilmDetail interface {
-	FilmDetail(filmID int) (FilmDetail, error)
-}
-
-type KinopoiskAPI interface {
-	KinopoiskReleaser
-	KinopoiskFilmDetail
-}
-
-func NewKinopoiskAPI(client clients.APIClient) KinopoiskAPI {
-	return &kinopoiskAPI{
-		KinopoiskReleaser:   &kinopoiskReleaser{client},
-		KinopoiskFilmDetail: &kinopoiskFilmDetail{client},
-	}
-}
-
-type kinopoiskAPI struct {
-	KinopoiskReleaser
-	KinopoiskFilmDetail
+func NewReleases(do clients.Doer) KinopoiskReleaser {
+	client := NewAPIClient(KINOPOISK_BASE_URL, do)
+	return &kinopoiskReleaser{client}
 }
 
 type kinopoiskReleaser struct {
@@ -81,10 +65,10 @@ func (api *kinopoiskReleaser) getReleases(date time.Time, offset int) ([]Release
 	log.Printf("Kinopoisk Request for date %s  with offset %v", date, offset)
 	uri := api.prepareRealeasesUri(date, offset)
 	var innerF func(url.URL) error
-	var movies []ReleaseItem
+	var movies = make([]ReleaseItem, 0, 150)
 
 	innerF = func(uri url.URL) error {
-		resp, err := api.APIClient.Request("GET", KINOPOISK_BASE_URL, uri.String())
+		resp, err := api.APIClient.Request("GET", uri.String())
 		if err != nil {
 			return err
 		}
@@ -95,17 +79,16 @@ func (api *kinopoiskReleaser) getReleases(date time.Time, offset int) ([]Release
 		if err != nil {
 			return err
 		}
-		//log.Printf("%s\n\n", buf)
 		err = json.Unmarshal(buf, &rc)
 		if err != nil || !rc.IsSuccess {
 			return err
 		}
 
-		if movies == nil {
-			movies = rc.Data.Items
-		} else {
-			movies = append(movies, rc.Data.Items...)
+		if !rc.IsSuccess {
+			return fmt.Errorf("get releases request failed. Content %s", buf)
 		}
+
+		movies = append(movies, rc.Data.Items...)
 
 		if rc.Data.Stats.Offset == 0 {
 			return nil
@@ -128,53 +111,4 @@ func (api *kinopoiskReleaser) prepareRealeasesUri(date time.Time, offset int) ur
 		RawQuery: q.Encode(),
 	}
 
-}
-
-const (
-	KINOPOISK_BASE_URL_FILMDETAIL = "https://ma.kinopoisk.ru/ios/5.0.0/"
-	KINOPOISK_API_FILMDETAIL      = "getKPFilmDetailView"
-	POSTER_URL                    = "https://st.kp.yandex.net/images/{}{}width=360"
-)
-
-type kinopoiskFilmDetail struct {
-	api clients.APIClient
-}
-
-func (k *kinopoiskFilmDetail) FilmDetail(filmID int) (FilmDetail, error) {
-	var filmDetail FilmDetail
-	uri := k.prepareUri(filmID)
-	resp, err := k.api.Request("GET", KINOPOISK_BASE_URL_FILMDETAIL, uri.String())
-	if err != nil {
-		return filmDetail, err
-	}
-	defer resp.Body.Close()
-	var rc filmDetailResponse
-	buf, err := ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return filmDetail, err
-	}
-	//log.Printf("%s\n\n", buf)
-	err = json.Unmarshal(buf, &rc)
-	if err != nil {
-		return filmDetail, err
-	}
-
-	if !rc.IsSuccess() {
-		return filmDetail, errors.New(rc.Message)
-	}
-	filmDetail = rc.Data
-
-	return filmDetail, nil
-}
-
-func (k *kinopoiskFilmDetail) prepareUri(filmID int) url.URL {
-	query := url.Values{
-		"still_limit": []string{"9"},
-		"filmID":      []string{strconv.Itoa(filmID)},
-	}
-	uri := url.URL{
-		Path:     KINOPOISK_API_FILMDETAIL,
-		RawQuery: query.Encode(),
-	}
-	return uri
 }

@@ -23,6 +23,10 @@ var todo = Release{
 	Torrents:  []Torrent{{"http://top-tor.org/download/696534", "BDRip 1080p"}},
 }
 
+func NewReleaseProvider() ReleaseProvider {
+	return &mockReleaseProvider{}
+}
+
 type mockReleaseProvider struct{}
 
 func (r mockReleaseProvider) GetReleases(_, _ time.Time) []Release {
