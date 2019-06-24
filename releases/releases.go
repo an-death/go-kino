@@ -9,10 +9,11 @@ type Release struct {
 	Rating     float64
 	PosterUrl  string
 	WebURL     string
+	Date       time.Time
 	Torrents   []Torrent
 }
 
-func (m *Release) RaitingCollor() string {
+func (m *Release) RatingColor() string {
 	if m.Rating > float64(7) {
 		return "#3bb33b"
 	}
@@ -32,6 +33,16 @@ type ReleaseProvider interface {
 	GetReleases(from, to time.Time) []Release
 }
 
-func NewReleaseProvider() ReleaseProvider {
-	return &mockReleaseProvider{}
+type Releases []Release
+
+func (r Releases) Len() int {
+	return len(r)
+}
+
+func (r Releases) Less(i int, j int) bool {
+	return r[i].Date.Before(r[j].Date)
+}
+
+func (r Releases) Swap(i int, j int) {
+	r[i], r[j] = r[j], r[i]
 }

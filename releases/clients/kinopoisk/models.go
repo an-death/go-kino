@@ -13,10 +13,12 @@ type responseContainer struct {
 	IsSuccess bool         `json:"success"`
 	Data      responseData `json:"data"`
 }
+
 type responseData struct {
 	Items []ReleaseItem    `json:"items"`
 	Stats responseDataStat `json:"stats"`
 }
+
 type responseDataStat struct {
 	Total  int `json:"total"`
 	Limit  int `json:"limit"`

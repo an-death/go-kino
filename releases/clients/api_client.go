@@ -3,7 +3,7 @@ package clients
 import "net/http"
 
 type APIClient interface {
-	Request(meth, baseUrl, endpoint string) (*http.Response, error)
+	Request(meth, endpoint string) (*http.Response, error)
 }
 
 type Doer interface {

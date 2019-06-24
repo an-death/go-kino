@@ -3,25 +3,28 @@ package releases
 import (
 	"log"
 	"net/http"
+	"sort"
 	"sync"
 	"time"
 
-	kinopoisk "github.com/an-death/go-kino/releases/clients/kinopoisk_api"
+	kinopoisk "github.com/an-death/go-kino/releases/clients/kinopoisk"
 )
 
 func NewKinopoiskProvider() ReleaseProvider {
-	api_client := kinopoisk.NewAPIClient(&http.Client{})
-	client := kinopoisk.NewKinopoiskAPI(api_client)
-	return &kinopoiskProvider{client}
+	client := http.Client{}
+	return &kinopoiskProvider{
+		KinopoiskReleaser:   kinopoisk.NewReleases(&client),
+		KinopoiskFilmDetail: kinopoisk.NewFilmDetail(&client),
+	}
 }
 
 type kinopoiskProvider struct {
-	kinopoisk kinopoisk.KinopoiskAPI
+	kinopoisk.KinopoiskReleaser
+	kinopoisk.KinopoiskFilmDetail
 }
 
 func (p *kinopoiskProvider) GetReleases(from, to time.Time) []Release {
-	var releases []kinopoisk.ReleaseItem
-	releases, err := p.kinopoisk.GetReleases(from, to)
+	releases, err := p.KinopoiskReleaser.GetReleases(from, to)
 	if err != nil {
 		log.Printf("%s\n", err)
 		return nil
@@ -37,8 +40,8 @@ func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Relea
 		log.Printf("FilmDetail done %s", time.Now().Sub(now))
 	}(time.Now())
 
+	group.Add(len(movies))
 	for i, releaseItem := range movies {
-		group.Add(1)
 		go func(id int, r kinopoisk.ReleaseItem) {
 			defer group.Done()
 			result, err := p.getReleaseInfo(r)
@@ -50,11 +53,12 @@ func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Relea
 		}(i, releaseItem)
 	}
 	group.Wait()
+	sort.Sort(stack.releases)
 	return stack.releases
 }
 
 func (p *kinopoiskProvider) getReleaseInfo(item kinopoisk.ReleaseItem) (Release, error) {
-	info, err := p.kinopoisk.FilmDetail(item.Id)
+	info, err := p.KinopoiskFilmDetail.FilmDetail(item.Id)
 	if err != nil {
 		return Release{}, err
 	}
@@ -67,7 +71,7 @@ func (p *kinopoiskProvider) getReleaseInfo(item kinopoisk.ReleaseItem) (Release,
 			"Режисёр":           info.Creators.Directors.String(),
 			"Актёры":            info.Creators.Actors.String(),
 			"Жанр":              info.Genre,
-			"Возраст":           info.RaitingMPAA + " " + info.RaitingAgeLimit,
+			"Возраст":           info.RaitingAgeLimit,
 			"Продолжительность": info.FilmLength,
 			"Рeйтинг КиноПоиск": info.RatingData.Rating,
 			"Рейтинг IMDb":      info.RatingData.RatingIMDb,
@@ -75,13 +79,14 @@ func (p *kinopoiskProvider) getReleaseInfo(item kinopoisk.ReleaseItem) (Release,
 		},
 		PosterUrl: item.Poster.Url,
 		Rating:    info.Rating(),
+		Date:      item.ContextData.ReleaseDate.AsDate(),
 		WebURL:    info.WebURL,
 	}
 	return release, nil
 }
 
 type releasesStack struct {
-	releases []Release
+	releases Releases
 	sync.Mutex
 }
 
