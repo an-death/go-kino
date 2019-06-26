@@ -80,7 +80,7 @@ func (api *kinopoiskReleaser) getReleases(date time.Time, offset int) ([]Release
 			return err
 		}
 		err = json.Unmarshal(buf, &rc)
-		if err != nil || !rc.IsSuccess {
+		if err != nil {
 			return err
 		}
 
