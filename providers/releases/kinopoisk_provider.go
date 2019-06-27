@@ -7,9 +7,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/an-death/go-kino/torrents"
+	"github.com/an-death/go-kino/providers/torrents"
 
-	"github.com/an-death/go-kino/releases/clients/kinopoisk"
+	"github.com/an-death/go-kino/providers/kinopoisk"
 )
 
 func NewKinopoiskProvider() ReleaseProvider {
@@ -55,7 +55,7 @@ func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Relea
 			if err != nil {
 				log.Printf("Cannot get torrents for %v err - %s \n", r.Id, err)
 			}
-			log.Printf("torrents found %v", len(tors))
+			tors = torrents.UniqueByQualitySeeds(tors)
 			result.Torrents = make([]Torrent, 0, len(tors))
 			for _, tor := range tors {
 				result.Torrents = append(result.Torrents, Torrent{Link: tor.Torrent, Type: tor.Quality})

@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/an-death/go-kino/releases/clients"
+	"github.com/an-death/go-kino/providers"
 )
 
 const (
@@ -32,13 +32,13 @@ type KinopoiskReleaser interface {
 	GetReleases(from, to time.Time) ([]ReleaseItem, error)
 }
 
-func NewReleases(do clients.Doer) KinopoiskReleaser {
+func NewReleases(do providers.Doer) KinopoiskReleaser {
 	client := NewAPIClient(KINOPOISK_BASE_URL, do)
 	return &kinopoiskReleaser{client}
 }
 
 type kinopoiskReleaser struct {
-	clients.APIClient
+	providers.APIClient
 }
 
 func (api *kinopoiskReleaser) GetReleases(from, to time.Time) ([]ReleaseItem, error) {

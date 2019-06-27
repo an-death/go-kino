@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"strconv"
 
-	"github.com/an-death/go-kino/releases/clients"
+	"github.com/an-death/go-kino/providers"
 )
 
 const (
@@ -19,13 +19,13 @@ type KinopoiskFilmDetail interface {
 	FilmDetail(filmID int) (FilmDetail, error)
 }
 
-func NewFilmDetail(do clients.Doer) KinopoiskFilmDetail {
+func NewFilmDetail(do providers.Doer) KinopoiskFilmDetail {
 	client := NewAPIClient(KINOPOISK_BASE_URL_FILMDETAIL, do)
 	return &kinopoiskFilmDetail{client}
 }
 
 type kinopoiskFilmDetail struct {
-	api clients.APIClient
+	api providers.APIClient
 }
 
 func (k *kinopoiskFilmDetail) FilmDetail(filmID int) (FilmDetail, error) {

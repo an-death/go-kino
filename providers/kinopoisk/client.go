@@ -9,7 +9,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/an-death/go-kino/releases/clients"
+	"github.com/an-death/go-kino/providers"
 )
 
 const (
@@ -17,12 +17,12 @@ const (
 )
 
 type client struct {
-	clients.Doer
+	providers.Doer
 	baseUrl        string
 	clientId, uuid string
 }
 
-func NewAPIClient(baseUrl string, do clients.Doer) clients.APIClient {
+func NewAPIClient(baseUrl string, do providers.Doer) providers.APIClient {
 	var clientId = make([]byte, 16, 16)
 	var uuid = make([]byte, 12, 12)
 	rand.Read(clientId)

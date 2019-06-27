@@ -2,6 +2,7 @@ package torrents
 
 import (
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -29,6 +30,9 @@ const (
 	RUTOR_SEARCH_URL = "http://rutor.info/search/0/0/010/0/film%20"
 )
 
+// LINK: https://regex101.com/r/fGdUBo/3
+var qualityRE = regexp.MustCompile(`(?:\d\) )(\w+ \d{3,4}p|\w+)`)
+
 var defaultClient = &http.Client{
 	Transport: &http.Transport{
 		Proxy: http.ProxyURL(&url.URL{
@@ -48,7 +52,16 @@ func GetTorrents(filmID int) ([]Torrent, error) {
 	if resp.StatusCode != 200 {
 		return nil, fmt.Errorf("no torrents. response code %v", resp.StatusCode)
 	}
-	doc, err := goquery.NewDocumentFromReader(resp.Body)
+	torrents, err := parseTorrents(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return torrents, nil
+}
+
+func parseTorrents(r io.Reader) ([]Torrent, error) {
+	doc, err := goquery.NewDocumentFromReader(r)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +69,6 @@ func GetTorrents(filmID int) ([]Torrent, error) {
 	doc.Find("#index").Find("tr:not(.backgr)").Each(func(i int, tr *goquery.Selection) {
 		torrents = append(torrents, parse(tr))
 	})
-	torrents = uniqueTorrentsByQuality(torrents)
 	return torrents, nil
 }
 
@@ -76,8 +88,6 @@ func parse(tr *goquery.Selection) Torrent {
 	}
 }
 
-var qualityRE = regexp.MustCompile(`\) (?P<quality>(\w+ \d{3,4}p|\w+))`)
-
 func extractQuality(s string) string {
 	matches := qualityRE.FindStringSubmatch(s)
 	if matches == nil || len(matches) < 2 {
@@ -91,7 +101,7 @@ func extractSeedLeaches(s string) (seeds, leaches) {
 	return seeds(int(sl[1] - '0')), leaches(int(sl[4] - '0'))
 }
 
-func uniqueTorrentsByQuality(ts []Torrent) []Torrent {
+func UniqueByQualitySeeds(ts []Torrent) []Torrent {
 	var out = make([]Torrent, 0, len(ts))
 	var set = make(map[string]int)
 	for _, t := range ts {
