@@ -1,10 +1,10 @@
 package torrents
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
@@ -33,17 +33,13 @@ const (
 // LINK: https://regex101.com/r/fGdUBo/3
 var qualityRE = regexp.MustCompile(`(?:\d\) )(\w+ \d{3,4}p|\w+)`)
 
-var defaultClient = &http.Client{
-	Transport: &http.Transport{
-		Proxy: http.ProxyURL(&url.URL{
-			Scheme: "http",
-			Host:   "37.59.136.91:80",
-		}),
-	},
+type Doer interface {
+	Do(*http.Request) (*http.Response, error)
 }
 
-func GetTorrents(filmID int) ([]Torrent, error) {
-	resp, err := defaultClient.Get(RUTOR_SEARCH_URL + strconv.Itoa(filmID))
+func GetTorrents(do Doer, filmID int) ([]Torrent, error) {
+	req := newRequest(filmID)
+	resp, err := do.Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -58,6 +54,15 @@ func GetTorrents(filmID int) ([]Torrent, error) {
 	}
 
 	return torrents, nil
+}
+
+func newRequest(filmID int) *http.Request {
+	r, err := http.NewRequest("GET", RUTOR_SEARCH_URL+strconv.Itoa(filmID), &bytes.Buffer{})
+	if err != nil {
+		panic(err)
+	}
+
+	return r
 }
 
 func parseTorrents(r io.Reader) ([]Torrent, error) {

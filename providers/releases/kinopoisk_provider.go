@@ -3,24 +3,45 @@ package releases
 import (
 	"log"
 	"net/http"
+	"os"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
+	"github.com/an-death/go-kino/providers"
 	"github.com/an-death/go-kino/providers/torrents"
 
 	"github.com/an-death/go-kino/providers/kinopoisk"
 )
 
 func NewKinopoiskProvider() ReleaseProvider {
-	client := http.Client{}
+	var transport http.RoundTripper = &http.Transport{}
+	client := http.Client{
+		Transport: providers.WrapGzipTransport(transport),
+	}
+
+	if proxy, ok := os.LookupEnv("PROXY"); ok {
+		scheme_host := strings.Split(proxy, "://")
+		transport = providers.NewProxyTransport(scheme_host[0], scheme_host[1])
+	}
+
+	client_with_proxy := http.Client{
+		Transport: providers.WrapGzipTransport(transport),
+	}
+
 	return &kinopoiskProvider{
+		getTorrents: func(filmId int) ([]torrents.Torrent, error) {
+			client := client_with_proxy
+			return torrents.GetTorrents(&client, filmId)
+		},
 		KinopoiskReleaser:   kinopoisk.NewReleases(&client),
 		KinopoiskFilmDetail: kinopoisk.NewFilmDetail(&client),
 	}
 }
 
 type kinopoiskProvider struct {
+	getTorrents func(int) ([]torrents.Torrent, error)
 	kinopoisk.KinopoiskReleaser
 	kinopoisk.KinopoiskFilmDetail
 }
@@ -51,7 +72,7 @@ func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Relea
 				log.Printf("release item Id:%v, %v detail request failed with %s\n", id, r, err)
 				return
 			}
-			tors, err := torrents.GetTorrents(r.Id)
+			tors, err := p.getTorrents(r.Id)
 			if err != nil {
 				log.Printf("Cannot get torrents for %v err - %s \n", r.Id, err)
 			}

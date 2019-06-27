@@ -12,19 +12,12 @@ import (
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)
-
-type mockRoundTriper struct {
-	fn roundTripFunc
+type _testDoer struct {
+	patch roundTripFunc
 }
 
-func (m *mockRoundTriper) RoundTrip(r *http.Request) (*http.Response, error) {
-	return m.fn(r)
-}
-
-func patchGet(patchFunc roundTripFunc) func() {
-	backClient := defaultClient
-	defaultClient = &http.Client{Transport: &mockRoundTriper{patchFunc}}
-	return func() { defaultClient = backClient }
+func (d *_testDoer) Do(r *http.Request) (*http.Response, error) {
+	return d.patch(r)
 }
 
 const FILMID = 100
@@ -33,12 +26,12 @@ var EXPECTED_URL = "http://rutor.info/search/0/0/010/0/film%20" + strconv.Itoa(F
 
 func Test_CheckUrl(t *testing.T) {
 	var called bool
-	defer patchGet(func(r *http.Request) (*http.Response, error) {
+	testDo := &_testDoer{func(r *http.Request) (*http.Response, error) {
 		assert.Equal(t, EXPECTED_URL, r.URL.String())
 		called = true
 		return nil, fmt.Errorf("test")
-	})()
-	GetTorrents(FILMID)
+	}}
+	GetTorrents(testDo, FILMID)
 	assert.True(t, called)
 }
 
@@ -58,7 +51,7 @@ func TestGetTorrents(t *testing.T) {
 			want1:   nil,
 			wantErr: true,
 			inspectErr: func(err error, t *testing.T) {
-				assert.Equal(t, fmt.Sprintf("Get %s: %s", EXPECTED_URL, "test"), err.Error())
+				assert.Equal(t, "test", err.Error())
 			},
 		},
 		{
@@ -108,9 +101,9 @@ func TestGetTorrents(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			defer patchGet(tt.patchFunc)()
+			testDo := &_testDoer{tt.patchFunc}
 
-			got1, err := GetTorrents(FILMID)
+			got1, err := GetTorrents(testDo, FILMID)
 
 			assert.Equal(t, tt.want1, got1)
 			if (err != nil) != tt.wantErr {
