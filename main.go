@@ -7,7 +7,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/an-death/go-kino/releases"
+	"github.com/an-death/go-kino/providers/releases"
 )
 
 var PORT string
