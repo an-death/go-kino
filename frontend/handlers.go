@@ -44,12 +44,36 @@ func releasesHandler(c *gin.Context) {
 	c.HTML(http.StatusOK, "index.html", newReleases)
 }
 
+func torrentFileProxy(c *gin.Context) {
+	torrentFileUrl := c.Query("url")
+	if torrentFileUrl == "" {
+		c.Status(http.StatusServiceUnavailable)
+		return
+	}
+
+	response, err := http.Get(torrentFileUrl)
+	if err != nil || response.StatusCode != http.StatusOK {
+		c.Status(http.StatusServiceUnavailable)
+		return
+	}
+
+	reader := response.Body
+	contentLength := response.ContentLength
+	contentType := response.Header.Get("Content-Type")
+
+	extraHeaders := map[string]string{}
+
+	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
+
+}
+
 func routes() *gin.Engine {
 	router := gin.Default()
 	router.Static("/static", "./frontend/static")
 	router.LoadHTMLFiles("frontend/html/index.html", "frontend/html/movie.html")
 	router.GET("/", indexHandler)
 	router.GET("/releases", releasesHandler)
+	router.GET("/proxy", torrentFileProxy)
 
 	return router
 }
