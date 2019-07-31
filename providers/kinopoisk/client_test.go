@@ -25,7 +25,6 @@ func Test_client_uriWithUUID(t *testing.T) {
 		{"with out any query", "/uri", "/uri?uuid=test_uuid"},
 		{"with one query arg", "/uri?first=1", "/uri?first=1&uuid=test_uuid"},
 		{"with two query arg", "/uri?first=1&second=2", "/uri?first=1&second=2&uuid=test_uuid"},
-		//	{"with boolquery arg", "/uri?first", "/uri?first&uuid=test_uuid"},
 	}
 	testClient := &client{
 		uuid: "test_uuid",
