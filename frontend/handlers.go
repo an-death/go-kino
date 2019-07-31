@@ -5,7 +5,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/an-death/go-kino/releases"
+	"github.com/an-death/go-kino/providers/releases"
 	"github.com/gin-gonic/gin"
 )
 

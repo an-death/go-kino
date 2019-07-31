@@ -4,11 +4,7 @@ import (
 	"log"
 	"os"
 
-<<<<<<< HEAD
 	"github.com/an-death/go-kino/frontend"
-=======
-	"github.com/an-death/go-kino/providers/releases"
->>>>>>> dev
 )
 
 var PORT string
