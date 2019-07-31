@@ -46,7 +46,7 @@ func releasesHandler(c *gin.Context) {
 
 func routes() *gin.Engine {
 	router := gin.Default()
-	router.Static("/static", "./static")
+	router.Static("/static", "./frontend/static")
 	router.LoadHTMLFiles("frontend/html/index.html", "frontend/html/movie.html")
 	router.GET("/", indexHandler)
 	router.GET("/releases", releasesHandler)
