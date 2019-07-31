@@ -3,6 +3,7 @@ package frontend
 import (
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/an-death/go-kino/providers/releases"
@@ -62,6 +63,9 @@ func torrentFileProxy(c *gin.Context) {
 	contentType := response.Header.Get("Content-Type")
 
 	extraHeaders := map[string]string{}
+	for headerName, headerValue := range response.Header {
+		extraHeaders[headerName] = strings.Join(headerValue, "; ")
+	}
 
 	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
 
