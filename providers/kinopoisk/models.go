@@ -113,6 +113,9 @@ func (j *json_creators) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &creators); err != nil {
 		return err
 	}
+	if creators == nil || len(creators) < 3 {
+		return nil
+	}
 	j.Directors = creators[0]
 	j.Actors = creators[1]
 	j.Producers = creators[2]
