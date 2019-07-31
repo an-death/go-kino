@@ -54,7 +54,6 @@ func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Relea
 	}
 	group.Wait()
 	sort.Sort(stack.releases)
-	log.Println(stack.releases)
 	return stack.releases
 }
 
