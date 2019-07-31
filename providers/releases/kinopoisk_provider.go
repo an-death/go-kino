@@ -79,7 +79,7 @@ func (p *kinopoiskProvider) fillReleases(movies []kinopoisk.ReleaseItem) []Relea
 			tors = torrents.UniqueByQualitySeeds(tors)
 			result.Torrents = make([]Torrent, 0, len(tors))
 			for _, tor := range tors {
-				result.Torrents = append(result.Torrents, Torrent{Link: tor.Torrent, Type: tor.Quality})
+				result.Torrents = append(result.Torrents, Torrent{Link: "/proxy?url=" + tor.Torrent, Type: tor.Quality})
 			}
 			stack.Add(result)
 		}(i, releaseItem)
