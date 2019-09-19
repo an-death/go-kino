@@ -110,5 +110,4 @@ func (api *kinopoiskReleaser) prepareRealeasesUri(date time.Time, offset int) ur
 		Path:     KINOPOISK_API_RELEASES_PATH,
 		RawQuery: q.Encode(),
 	}
-
 }

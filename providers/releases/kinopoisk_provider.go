@@ -3,6 +3,7 @@ package releases
 import (
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"sort"
 	"strings"
@@ -17,22 +18,22 @@ import (
 
 func NewKinopoiskProvider() ReleaseProvider {
 	var transport http.RoundTripper = &http.Transport{}
-	client := http.Client{
-		Transport: providers.WrapGzipTransport(transport),
-	}
 
 	if proxy, ok := os.LookupEnv("PROXY"); ok {
 		scheme_host := strings.Split(proxy, "://")
-		transport = providers.NewProxyTransport(scheme_host[0], scheme_host[1])
+		url := url.URL{
+			Scheme: scheme_host[0],
+			Host:   scheme_host[1],
+		}
+		transport.(*http.Transport).Proxy = http.ProxyURL(&url)
 	}
 
-	client_with_proxy := http.Client{
+	client := http.Client{
 		Transport: providers.WrapGzipTransport(transport),
 	}
 
 	return &kinopoiskProvider{
 		getTorrents: func(filmId int) ([]torrents.Torrent, error) {
-			client := client_with_proxy
 			return torrents.GetTorrents(&client, filmId)
 		},
 		KinopoiskReleaser:   kinopoisk.NewReleases(&client),
