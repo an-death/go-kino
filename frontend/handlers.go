@@ -1,6 +1,7 @@
 package frontend
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -68,16 +69,39 @@ func torrentFileProxy(c *gin.Context) {
 	}
 
 	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
+}
 
+func searchGet(c *gin.Context) {
+	searchFilmName := c.Query("query")
+	if searchFilmName == "" {
+		c.HTML(http.StatusOK, "search.html", nil)
+	}
+	searchQuery := fmt.Sprintf(`http://rutor.info/search/%s/?search_method=0&search_in=0&category=0&s_ad=0`, searchFilmName)
+	response, err := http.Get(searchQuery)
+	if err != nil {
+		c.Status(http.StatusServiceUnavailable)
+		return
+	}
+	reader := response.Body
+	contentLength := response.ContentLength
+	contentType := response.Header.Get("Content-Type")
+
+	extraHeaders := map[string]string{}
+	for headerName, headerValue := range response.Header {
+		extraHeaders[headerName] = strings.Join(headerValue, "; ")
+	}
+
+	c.DataFromReader(http.StatusOK, contentLength, contentType, reader, extraHeaders)
 }
 
 func routes() *gin.Engine {
 	router := gin.Default()
 	router.Static("/static", "./frontend/static")
-	router.LoadHTMLFiles("frontend/html/index.html", "frontend/html/movie.html")
+	router.LoadHTMLFiles("frontend/html/index.html", "frontend/html/movie.html", "frontend/html/search.html")
 	router.GET("/", indexHandler)
 	router.GET("/releases", releasesHandler)
 	router.GET("/proxy", torrentFileProxy)
+	router.GET("/search", searchGet)
 
 	return router
 }
