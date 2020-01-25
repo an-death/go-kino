@@ -75,6 +75,7 @@ func searchGet(c *gin.Context) {
 	searchFilmName := c.Query("query")
 	if searchFilmName == "" {
 		c.HTML(http.StatusOK, "search.html", nil)
+		return
 	}
 	searchQuery := fmt.Sprintf(`http://rutor.info/search/%s/?search_method=0&search_in=0&category=0&s_ad=0`, searchFilmName)
 	response, err := http.Get(searchQuery)
