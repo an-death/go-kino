@@ -2,8 +2,8 @@ package frontend
 
 import (
 	"fmt"
+	"io"
 	"net/http"
-	"net/url"
 	"strings"
 	"time"
 
@@ -17,17 +17,36 @@ func init() {
 	releaseProvider = releases.NewKinopoiskProvider()
 }
 
-func indexHandler(c *gin.Context) {
-	now := time.Now()
-	query := url.Values{
-		"from": []string{now.AddDate(0, -1, 0).Format("2006-01")},
-		"to":   []string{now.Format("2006-01")},
+// func indexHandler(c *gin.Context) {
+// 	now := time.Now()
+// 	query := url.Values{
+// 		"from": []string{now.AddDate(0, -1, 0).Format("2006-01")},
+// 		"to":   []string{now.Format("2006-01")},
+// 	}
+// 	newUrl := url.URL{
+// 		Path:     "releases",
+// 		RawQuery: query.Encode(),
+// 	}
+// 	c.Redirect(http.StatusMovedPermanently, newUrl.RequestURI())
+// }
+
+func handleHTTP(w http.ResponseWriter, req *http.Request) {
+	resp, err := http.DefaultTransport.RoundTrip(req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusServiceUnavailable)
+		return
 	}
-	newUrl := url.URL{
-		Path:     "releases",
-		RawQuery: query.Encode(),
+	defer resp.Body.Close()
+	copyHeader(w.Header(), resp.Header)
+	w.WriteHeader(resp.StatusCode)
+	io.Copy(w, resp.Body)
+}
+func copyHeader(dst, src http.Header) {
+	for k, vv := range src {
+		for _, v := range vv {
+			dst.Add(k, v)
+		}
 	}
-	c.Redirect(http.StatusMovedPermanently, newUrl.RequestURI())
 }
 
 type requestTimeRange struct {
@@ -99,7 +118,7 @@ func routes() *gin.Engine {
 	router := gin.Default()
 	router.Static("/static", "./frontend/static")
 	router.LoadHTMLFiles("frontend/html/index.html", "frontend/html/movie.html", "frontend/html/search.html")
-	router.GET("/", indexHandler)
+	router.GET("/", gin.WrapF(handleHTTP))
 	router.GET("/releases", releasesHandler)
 	router.GET("/proxy", torrentFileProxy)
 	router.GET("/search", searchGet)
