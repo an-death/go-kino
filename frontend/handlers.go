@@ -86,14 +86,13 @@ func replaceUrls(source io.Reader) (io.ReadCloser, error) {
 				panic(err)
 			}
 			if u.IsAbs() {
-				link.ReplaceWithHtml("/proxy?url=" + href)
+				link.SetAttr("href", "/proxy?url="+href)
 			} else {
 				local, _ := url.Parse("/proxy")
 				q := local.Query()
 				q.Set("url", base.ResolveReference(u).String())
 				local.RawQuery = q.Encode()
-
-				link.ReplaceWithHtml(local.String())
+				link.SetAttr("href", local.String())
 			}
 		}
 	})
