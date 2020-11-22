@@ -75,9 +75,12 @@ func replaceUrls(source io.Reader) (io.ReadCloser, error) {
 	}
 
 	base, _ := url.Parse("http://rutor.info/")
-	doc.Find("#index").Find("a").Each(func(_ int, link *goquery.Selection) {
+	doc.Find("#index").Find("tr:not(.backgr)").Find("a").Each(func(_ int, link *goquery.Selection) {
 		href, ok := link.Attr("href")
 		if ok {
+			if !strings.HasPrefix(href, "/torrent") {
+				return
+			}
 			u, err := url.Parse(href)
 			if err != nil {
 				panic(err)
